@@ -1,4 +1,4 @@
-from Product import Product
+from Dto.Product import Product
 import Scraper
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait

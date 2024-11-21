@@ -1,4 +1,4 @@
-from AmazonScraper import AmazonScraper
+from Scraper.AmazonScraper import AmazonScraper
 
 class PriceGuard:
     def __init__(self,countryCode,productName,currency):
