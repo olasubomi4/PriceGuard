@@ -11,7 +11,7 @@ import os
 from PriceGuard import PriceGuard
 from db.PostgreSql import PostgreSql
 
-p=PriceGuard("IE","Playstation 5 Pro","EUR").performDataAcquisition()
+p=PriceGuard("IE","Playstation 5","EUR").performDataAcquisition()
 # postgreSql = PostgreSql()
 # print(postgreSql.execute())
 

@@ -20,13 +20,17 @@ class PriceGuard:
         scrapersResult = []
         amazonScraper = AmazonScraper( self.__countryCode,self.__productName, self.__currency)
         scrapers = [amazonScraper]
+        ps=pd.DataFrame()
         for scraper in scrapers:
             res=scraper.Scrape()
             scraper_json = res.values()
 
             for a in scraper_json:
-                print(a.to_dict())
-            scrapersResult.append(res)
+                ps = pd.concat([ps, pd.DataFrame([a.to_dict()])], ignore_index=True)
+
+                scrapersResult.append(res)
+        ps.to_csv('a.cvs',index=False)
+        print(ps)
 
     def performDataTransformation(self):
 
