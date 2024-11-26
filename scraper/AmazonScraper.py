@@ -29,7 +29,7 @@ class AmazonScraper(Scraper):
         self._changeCountryToDesiredCountry()
         self._changeCurrencyToDesiredCurrency()
         self._findProduct()
-        return self._getRelevantProductLinks()
+        return self._getRelevantProducts()
 
     
     def _acceptCookies(self):
@@ -89,7 +89,7 @@ class AmazonScraper(Scraper):
         searchBox.submit()
 
 
-    def _getRelevantProductLinks(self):
+    def _getRelevantProducts(self):
         products= self.driver.find_elements(By.XPATH,"//div[contains(@class, 's-main-slot')]/div[@data-component-type='s-search-result']")
 
         productList={}
@@ -97,7 +97,6 @@ class AmazonScraper(Scraper):
         for product in products:
 
             try:
-                title= product.find_element(By.XPATH,".//span[@class='a-size-medium a-color-base a-text-normal']").text
                 title= product.find_element(By.XPATH,".//span[@class='a-size-medium a-color-base a-text-normal']").text
 
                 if(self.__productName.lower() not in title.lower()):
@@ -130,7 +129,104 @@ class AmazonScraper(Scraper):
                 productObject.setProductCurrency(currency)
                 productList[productId]=productObject
 
+        time.sleep(5)
+        for product in productList.values():
+            self._getDetailedInformationAboutProduct(product)
+
         return productList
+
+    def _getDetailedInformationAboutProduct(self,product):
+        if product!=None and product.getProductLink()!=None:
+            driver=self.driver
+            driver.get(product.getProductLink())
+            self._getProuctRating(product,driver)
+            self._isProductInStock(product, driver)
+            self._getProductFeatures(product,driver)
+            self._getDeliveryDetails(product,driver)
+            self._getProductDetails(product,driver)
+            self._getProductDetails(product,driver)
+            self._getEventName(product,driver)
+            self._getDiscountPercentage(product,driver)
+            self._getProductCateogry(product,driver)
+
+    def _getProuctRating(self,product,driver):
+        try:
+            averageCustomerRating = driver.find_element(By.ID, "averageCustomerReviews")
+            averageCustomerRating = averageCustomerRating.find_element(By.XPATH, '//*[@id="acrPopover"]/span[1]/a/span')
+            product.setProductRating(averageCustomerRating.text)
+        except Exception as e:
+            product.setProductRating("Rating not available")
+
+    def _isProductInStock(self,product, driver):
+        try:
+            productAvailability = driver.find_element(By.ID, "availability")
+            productAvailabilityValue = productAvailability.text
+            if (productAvailabilityValue == "In stock"):
+                product.setIsInStock(True)
+        except Exception as e:
+                product.setIsInStock("Stock status not available")
+
+    def _getProductFeatures(self,product, driver):
+        try:
+            table = WebDriverWait(driver, 10).until(
+                expected_conditions.presence_of_element_located((By.XPATH, '//*[@id="poExpander"]/div[1]/div/table/tbody'))
+            )
+            rows = table.find_elements(By.TAG_NAME, "tr")
+
+            data = {}
+            for row in rows:
+                try:
+                    key_cell = row.find_element(By.CLASS_NAME, "a-span3")
+                    value_cell = row.find_element(By.CLASS_NAME, "a-span9")
+
+                    key = key_cell.text.strip()
+                    value = value_cell.text.strip()
+
+                    data[key] = value
+                except Exception as e:
+                    continue
+
+            for key, value in data.items():
+                print(f"{key}: {value}")
+
+            product.setProductFeatures(data)
+        except:
+             product.setProductFeatures("Features not available")
+
+    def _getDeliveryDetails(self,product, driver):
+        try:
+            deliveryInformation = driver.find_element(By.ID, "deliveryBlockMessage");
+            product.setDeliveryDetails(deliveryInformation.text)
+        except Exception as e:
+            product.setDeliveryDetails("Delivery details not available")
+
+    def _getProductDetails(self,product, driver):
+
+        try:
+            productDetails = driver.find_element(By.ID, "feature-bullets")
+            product.setProductDescription(productDetails.text)
+        except Exception as e:
+            product.setProductDescription("Product description not available")
+
+    def _getEventName(self,product, driver):
+        try:
+            product.setEvent(driver.find_element(By.ID, "dealBadgeSupportingText").text)
+        except:
+            product.setEvent("Event not available")
+
+    def _getDiscountPercentage(self,product, driver):
+        try:
+            discountPercentage = driver.find_element(By.CLASS_NAME, 'savingPriceOverride')
+            product.setDiscountPercentage(discountPercentage.text)
+        except:
+            product.setDiscountPercentage("Discount percentage not available")
+
+    def _getProductCateogry(self,product, driver):
+        try:
+            productCategory = driver.find_element(By.XPATH, '//*[@id="nav-subnav"]/a[1]/span');
+            product.setProductCategory(productCategory)
+        except Exception as e:
+            product.setProductCategory("Product category not available")
 
     def _extractProductIdFromLink(self,link):
         asin = re.search(r"/dp/([A-Z0-9]{10})",link)

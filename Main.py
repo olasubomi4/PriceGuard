@@ -10,7 +10,8 @@ import os
 
 from PriceGuard import PriceGuard
 
-p=PriceGuard("IE","Playstation 5","EUR").performDataAcquisition()
+p=PriceGuard("IE","Playstation 5 Pro","EUR").performDataAcquisition()
+
 #
 # def acceptCookies():
 #     acceptCookies=driver.find_element(By.ID,"sp-cc-accept");

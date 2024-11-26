@@ -13,6 +13,7 @@ class PriceGuard:
         scrapers = [amazonScraper]
         for scraper in scrapers:
             res=scraper.Scrape()
+            print((res.values()))
             scrapersResult.append(res)
 
     def performDataTransformation(self):

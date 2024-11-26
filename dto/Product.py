@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 class Product:
     def __init__(self,productStore):
         self.__productLink=""
@@ -56,7 +57,7 @@ class Product:
     def getProductFeature(self):
         return self.__productFeatures
     
-    def setProductFeature(self,productFeatures):
+    def setProductFeatures(self,productFeatures):
         self.__productFeatures=productFeatures
 
     def getProductRating(self):
@@ -130,3 +131,5 @@ class Product:
 
     def setProductCategory(self,productCategory):
         self.__productCategory=productCategory
+
+
