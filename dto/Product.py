@@ -132,4 +132,30 @@ class Product:
     def setProductCategory(self,productCategory):
         self.__productCategory=productCategory
 
+    def to_dict(self):
+        return {
+            "productLink": self.__productLink,
+            "productName": self.__productName,
+            "productDescription": self.__productDescription,
+            "productPrice": self.__productPrice,
+            "productImage": self.__productImage,
+            "productFeatures": self.__productFeatures,
+            "productRating": self.__productRating,
+            "maxProductRating": self.__maxProductRating,
+            "deliveryFee": self.__deliveryFee,
+            "isInStock": self.__isInStock,
+            "productCurrency": self.__productCurrency,
+            "deliveryDetails": self.__deliveryDetails,
+            "discountPercentage": self.__discountPercentage,
+            "priceBeforeDiscount": self.__priceBeforeDiscount,
+            "event": self.__event,
+            "productScrapeDate": self.__productScrapeDate.isoformat(),
+            "productStore": self.__productStore,
+            "productCategory": self.__productCategory,
+            "productId": self.__productId
+        }
+
+    # def __str__(self):
+    #     return self.to_dict()
+
 
