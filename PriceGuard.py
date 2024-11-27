@@ -29,7 +29,7 @@ class PriceGuard:
                 ps = pd.concat([ps, pd.DataFrame([a.to_dict()])], ignore_index=True)
 
                 scrapersResult.append(res)
-        ps.to_csv('a.cvs',index=False)
+        ps.to_csv('a.csv',index=False)
         print(ps)
 
     def performDataTransformation(self):

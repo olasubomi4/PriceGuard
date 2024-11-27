@@ -224,7 +224,7 @@ class AmazonScraper(Scraper):
     def _getProductCateogry(self,product, driver):
         try:
             productCategory = driver.find_element(By.XPATH, '//*[@id="nav-subnav"]/a[1]/span');
-            product.setProductCategory(productCategory)
+            product.setProductCategory(productCategory.text)
         except Exception as e:
             product.setProductCategory("Product category not available")
 
