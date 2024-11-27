@@ -147,7 +147,9 @@ class AmazonScraper(Scraper):
             self._getProductDetails(product,driver)
             self._getEventName(product,driver)
             self._getDiscountPercentage(product,driver)
+            self._getPriceBeforeDiscount(product, driver)
             self._getProductCateogry(product,driver)
+
 
     def _getProuctRating(self,product,driver):
         try:
@@ -156,6 +158,14 @@ class AmazonScraper(Scraper):
             product.setProductRating(averageCustomerRating.text)
         except Exception as e:
             product.setProductRating("Rating not available")
+
+    def _getPriceBeforeDiscount(self,product, driver):
+        try:
+            priceBeforeDiscount = driver.find_element(By.XPATH, './/*[@id="corePriceDisplay_desktop_feature_div"]/div[2]/span/span[1]/span[2]/span')
+
+            product.setPriceBeforeDiscount(priceBeforeDiscount.text)
+        except Exception as e:
+            product.setPriceBeforeDiscount("Price not available")
 
     def _isProductInStock(self,product, driver):
         try:
