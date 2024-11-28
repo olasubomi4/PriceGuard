@@ -21,6 +21,7 @@ class Product:
         self.__productStore=productStore
         self.__productCategory=""
         self.__productId=""
+        self.__productLocation=""
 
     def getProductId(self):
         return self.__productId
@@ -132,6 +133,12 @@ class Product:
     def setProductCategory(self,productCategory):
         self.__productCategory=productCategory
 
+    def getProductLocation(self):
+        return self.__productLocation
+
+    def setProductLocation(self,productLocation):
+        self.__productLocation=productLocation
+
     def to_dict(self):
         return {
             "productLink": self.__productLink,
@@ -152,7 +159,8 @@ class Product:
             "productScrapeDate": self.__productScrapeDate.isoformat(),
             "productStore": self.__productStore,
             "productCategory": self.__productCategory,
-            "productId": self.__productId
+            "productId": self.__productId,
+            "productLocation": self.__productLocation
         }
 
     # def __str__(self):

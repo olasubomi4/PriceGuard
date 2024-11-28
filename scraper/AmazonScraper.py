@@ -39,6 +39,7 @@ class AmazonScraper(Scraper):
         acceptCookies.click()
     
     def _changeCountryToDesiredCountry(self):
+        time.sleep(2)
         changeCountry=WebDriverWait(self.driver,15).until(
             expected_conditions.presence_of_element_located((By.ID,"nav-global-location-popover-link"))
 
@@ -127,6 +128,7 @@ class AmazonScraper(Scraper):
                 productObject.setProductPrice(price)
                 productObject.setProductName(title)
                 productObject.setProductCurrency(currency)
+                productObject.setProductLocation(self.__countryCode)
                 productList[productId]=productObject
 
         time.sleep(5)

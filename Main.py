@@ -11,8 +11,9 @@ import os
 from PriceGuard import PriceGuard
 from db.PostgreSql import PostgreSql
 
-p=PriceGuard("IE","Playstation 5","EUR").performDataAcquisition()
-
+p=PriceGuard("IE","Playstation 5","EUR")
+scrapedData1=p.performDataAcquisition()
+p.performDataTransformation(scrapedData1)
 
 #
 # def acceptCookies():
