@@ -1,4 +1,5 @@
 from db.PostgreSql import PostgreSql
+from factory.AmazonTransformerFactory import AmazonTransformerFactory
 from factory.EbayTransformerFactory import EbayTransformerFactory
 from scraper.AmazonScraper import AmazonScraper
 import pandas as pd
@@ -48,14 +49,38 @@ class PriceGuard:
 
     def performDataTransformation(self,scrapedData:  pd.DataFrame):
         ebayData = scrapedData[scrapedData["productStore"] == "Ebay"]
+        amazonData = scrapedData[scrapedData["productStore"] == "AMAZON"]
         scrapedData = scrapedData[scrapedData["productStore"] != "Ebay"]
+        scrapedData = scrapedData[scrapedData["productStore"] != "AMAZON"]
         ebayTransformer=EbayTransformerFactory().createTransformer(self.__productName)
-        scrapedData=pd.concat([scrapedData,ebayTransformer.transformData(ebayData)],ignore_index=True)
+        amazonTransformer=AmazonTransformerFactory().createTransformer(self.__productName)
+
+        all_data = []
+        all_data.append(ebayTransformer.transformData(ebayData))
+        all_data.append(amazonTransformer.transformData(amazonData))
+        # scrapedData=pd.concat([scrapedData,ebayTransformer.transformData(ebayData)],ignore_index=True)
+        scrapedData=pd.concat(all_data,ignore_index=True)
+
+
 
         scrapedData.to_csv('transformedData.csv',index=True)
+
+        scrapedData=self.removeRowsWhereBrandIsNotApple(scrapedData)
+        scrapedData=self.removeRowsWhereColorIsBlank(scrapedData)
+
+
         print("ad")
 
     def performDataLoading(self,scrapersResult):
         postgreSql = PostgreSql()
         postgreSql.insertProducts(scrapersResult);
+
         pass
+
+
+    def removeRowsWhereBrandIsNotApple(self,scrapedData: pd.DataFrame):
+        brandsWhichAreNotApple= scrapedData[scrapedData["brand"] != "Amazon"]
+        return scrapedData
+
+    def removeRowsWhereColorIsBlank(self, scrapedData: pd.DataFrame):
+        return scrapedData.dropna(subset=["Colour"])

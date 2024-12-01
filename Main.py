@@ -3,6 +3,9 @@ import pandas as pd
 
 p=PriceGuard("IE","Iphone 16","EUR")
 scrapedData1=p.performDataAcquisition()
-p.performDataTransformation(pd.read_csv(scrapedData1))
+newCopy=scrapedData1.copy()
+p.performDataTransformation(newCopy)
+# p.performDataTransformation(pd.read_csv("/Users/odekunleolasubomi/PycharmProjects/PriceGuard/rawData.csv"))
+
 
 

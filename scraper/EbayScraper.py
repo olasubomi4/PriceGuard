@@ -39,10 +39,22 @@ class EbayScraper(Scraper):
 
 
     def _acceptCookies(self):
-        acceptCookies= WebDriverWait(self.driver,15).until(
-            expected_conditions.presence_of_element_located((By.ID,"gdpr-banner-accept"))
-        )
-        acceptCookies.click()
+        success=False
+        counter=0
+        while(success==False):
+            try:
+                if(counter >0):
+                    self.driver.get(os.getenv("EBAY_URL"))
+                acceptCookies = WebDriverWait(self.driver, 15).until(
+                    expected_conditions.presence_of_element_located((By.ID, "gdpr-banner-accept"))
+                )
+                acceptCookies.click()
+                success=True
+            except Exception as e:
+                counter += 1
+                print(f"Ebay accept cookie retry {counter}")
+                if(counter>=4):
+                    success=True
 
     def _findProduct(self):
         time.sleep(5)
@@ -54,49 +66,51 @@ class EbayScraper(Scraper):
         searchBox.submit()
 
     def _getRelevantProducts(self):
-
-        productsContainer = self.driver.find_elements(By.ID,
-                                             'srp-river-results')[0]
-
-        products = productsContainer.find_elements(By.XPATH, ".//li[contains(@class, 's-item')]")
-
-        #
-
+        counter=1
         productList = {}
+        limit= int(os.getenv("EBAY_PAGE_LIMIT"))
+        while limit > counter:
 
-        for product in products:
-            try:
-                title = product.find_element(By.CLASS_NAME,
-                                             "s-item__title").text
+            productsContainer = self.driver.find_elements(By.ID,
+                                                 'srp-river-results')[0]
 
-                if (self.__productName.lower() not in title.lower()):
-                    continue
-            except:
-                title = "Title not found"
+            products = productsContainer.find_elements(By.XPATH, ".//li[contains(@class, 's-item')]")
 
-            try:
-                currency,price = product.find_element(By.CLASS_NAME, "s-item__price").text.split()
-            except:
-                price = "Price not available"
-                currency = "Currency not available"
+            for product in products:
+                try:
+                    title = product.find_element(By.CLASS_NAME,
+                                                 "s-item__title").text
+
+                    if (self.__productName.lower() not in title.lower()):
+                        continue
+                except:
+                    title = "Title not found"
+
+                try:
+                    currency,price = product.find_element(By.CLASS_NAME, "s-item__price").text.split()
+                except:
+                    price = "Price not available"
+                    currency = "Currency not available"
 
 
-            try:
-                link = product.find_element(By.CLASS_NAME, "s-item__link").get_attribute("href")
-            except:
-                link = "Link not available"
+                try:
+                    link = product.find_element(By.CLASS_NAME, "s-item__link").get_attribute("href")
+                except:
+                    link = "Link not available"
 
-            productId = self._extractProductIdFromLink(link)
-            if productId != None:
-                productObject = Product("Ebay")
-                productObject.setProductLink(link)
-                productObject.setProductId(productId)
-                productObject.setProductPrice(price)
-                productObject.setProductName(title)
-                productObject.setProductCurrency(currency)
-                productList[productId] = productObject
+                productId = self._extractProductIdFromLink(link)
+                if productId != None:
+                    productObject = Product("Ebay")
+                    productObject.setProductLink(link)
+                    productObject.setProductId(productId)
+                    productObject.setProductPrice(price)
+                    productObject.setProductName(title)
+                    productObject.setProductCurrency(currency)
+                    productList[productId] = productObject
 
-        time.sleep(5)
+            self._goToNextPage(self.driver)
+            counter+=1
+            time.sleep(5)
         for product in productList.values():
             self._getDetailedInformationAboutProduct(product)
 
@@ -115,19 +129,14 @@ class EbayScraper(Scraper):
                 self._getProductDetails(product, driver)
                 self._getEventName(product, driver)
                 self._getProductCateogry(product, driver)
-            except :
-                pass
+            except Exception as e:
+                print(e)
+
 
 
             time.sleep(2)
 
 
-            # self._getDiscountPercentage(product, driver)
-            # self._getPriceBeforeDiscount(product, driver)
-            # self._getProductCateogry(product, driver)
-            # self._getProductLocation(product, driver)
-
-    # // *[ @ id = "STORE_INFORMATION"] / div / div / div[1] / div[1] / div[2] / div / h4 / span[1]
 
 
     def _isProductInStock(self,product, driver):
@@ -233,6 +242,15 @@ class EbayScraper(Scraper):
         if asin:
             return asin.group(1)
         return None
+
+    def _goToNextPage(self,driver):
+        try:
+            nextPage = driver.find_element(By.CLASS_NAME, "pagination__next")
+            nextPage.click()
+        except Exception as e:
+            print(e)
+        # driver.get(nextPage)
+
 
     def _getProuctRating(self, product, driver):
         try:

@@ -1,16 +1,21 @@
 import ast
-
+import json
 
 class Utility:
     def __init__(self):
         pass
 
+
     def convertDictionaryInStringFormatToDictionary(self, stringDictionary):
         try:
-            stringDictionary = stringDictionary.replace("'", "\"")
+            # stringDictionary = stringDictionary.replace('"', " ")
+            # stringDictionary = stringDictionary.replace("'", "\"")
+
+            # stringDictionary=stringDictionary.replace("\n", " ")
             return ast.literal_eval(stringDictionary)
 
-        except :
+        except Exception as e:
+            print(e)
             return {}
 
         # newDictionary = {}
@@ -30,7 +35,7 @@ class Utility:
         #
         # return newDictionary
 
-if __name__ == "__main__":
-    utility = Utility()
-    a=utility.convertDictionaryInStringFormatToDictionary("{'Condition': 'New: A brand-new, unused, unopened and undamaged item in original retail packaging (where packaging ... Read more\\nabout the condition', 'Compatible Brand': 'For Apple', 'Character': 'Max', 'Items Included': 'N/a', 'Custom Bundle': 'Yes', 'Compatible Model': 'For Apple iPhone 11, For Apple iPhone 11 Pro, For Apple iPhone 11 Pro Max, For Apple iPhone 12, For Apple iPhone 12 mini, For Apple iPhone 12 Pro, For Apple iPhone 12 Pro Max, For Apple iPhone 13, For Apple iPhone 13 mini, For Apple iPhone 13 Pro, For Apple iPhone 13 Pro Max, For Apple iPhone 14, For Apple iPhone 14 Plus, For Apple iPhone 14 Pro, For Apple iPhone 14 Pro Max, For Apple iPhone 15, For Apple iPhone 15 Plus, For Apple iPhone 15 Pro, For Apple iPhone 15 Pro Max, For Apple iPhone 7, For Apple iPhone 8, For Apple iPhone SE (2nd Generation), For Apple iPhone SE (3rd Generation), For Apple iPhone X, For Apple iPhone XR, For Apple iPhone XS, For Apple iPhone 16 Pro Max, For Apple iPhone 16 Pro, For Apple iPhone 16, For Apple iPhone 16 Plus', 'MPN': 'Does Not Apply', 'Material': 'Silicone/Gel/Rubber', 'Colour': 'Clear', 'Brand': 'PROMAX', 'Type': 'Soft', 'Version': '4', 'Manufacturer Warranty': '1 Year', 'Design/Finish': 'Glossy, Plain, Transparent', 'Theme': 'N/a', 'Features': '360 Protection, Anti-Scratch, Case Friendly, Lightweight, Non-Slip, Shockproof, Smartcase', 'Country/Region of Manufacture': 'China', 'Wireless Charging Standard': 'Qi', 'Character Family': 'Free!', 'Personalise': 'No'}")
-    print(a)
+# if __name__ == "__main__":
+#     utility = Utility()
+#     a=utility.convertDictionaryInStringFormatToDictionary("{'Condition': 'New: A brand-new, unused, unopened and undamaged item in original retail packaging (where packaging ... Read more\nabout the condition', 'Colore': 'Multicolore', 'Capacità di memorizzazione': '256 GB', 'Stile': 'Classico', 'Slot scheda SIM': 'Dual SIM (SIM + eSIM)', 'MPN': 'NON APPLICABILE', 'Garanzia produttore': '2 anni', 'Memoria RAM': '6 GB', 'Processore': 'Hexa Core', 'Tipo di scheda di memoria': 'MicroSD', 'Risoluzione fotocamera': '12,0 MP', 'Contratto': 'Senza contratto', 'Numero modello': '440G', 'Marca': 'Apple', 'Modello': 'Apple iPhone 16', 'Connettività': '5G', 'Dimensioni schermo': '6,1"', 'Stato di blocco': 'Sbloccato da fabbrica', 'Sistema operativo': 'iOS', 'Paese di fabbricazione': 'Italia'}"")
+#     print(a)

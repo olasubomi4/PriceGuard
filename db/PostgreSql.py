@@ -27,8 +27,10 @@ class PostgreSql:
                 return res
 
     def insertProducts(self, data):
-        pass
-        #"I will implement the logic to insert the transformed data from the webscrappers here."
+        with self.__getConn() as conn:
+            df.to_sql('your_table_name', con=conn, index=False,
+                      if_exists='replace')  # You can choose 'append' instead of 'replace'
+
 
 
 

@@ -29,7 +29,7 @@ class AmazonScraper(Scraper):
         self._changeCurrencyToDesiredCurrency()
         self._findProduct()
         pro= self._getRelevantProducts()
-        # self.driver.close()
+
         return pro
 
     
@@ -159,7 +159,7 @@ class AmazonScraper(Scraper):
             self._getProductFeatures(product,driver)
             self._getDeliveryDetails(product,driver)
             self._getProductDetails(product,driver)
-            self._getProductDetails(product,driver)
+            # self._getProductDetails(product,driver)
             self._getEventName(product,driver)
             self._getDiscountPercentage(product,driver)
             self._getPriceBeforeDiscount(product, driver)
@@ -191,7 +191,19 @@ class AmazonScraper(Scraper):
         except Exception as e:
                 product.setIsInStock("Stock status not available")
 
+    def _seeMoreProductFeatures(self, driver):
+        try:
+            seeMoreFeatures = WebDriverWait(driver, 10).until(
+                expected_conditions.presence_of_element_located(
+                    (By.XPATH,'//*[@id="poToggleButton"]/a'))
+            )
+
+            seeMoreFeatures.click()
+        except Exception as e:
+            print(e)
+            pass
     def _getProductFeatures(self,product, driver):
+        self._seeMoreProductFeatures(driver)
         try:
             table = WebDriverWait(driver, 10).until(
                 expected_conditions.presence_of_element_located((By.XPATH, '//*[@id="poExpander"]/div[1]/div/table/tbody'))
