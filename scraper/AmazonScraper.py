@@ -16,12 +16,11 @@ from scraper.Scraper import Scraper
 
 class AmazonScraper(Scraper):
     load_dotenv()
-    service= Service(executable_path=os.getenv("EXE_PATH"))
-    driver=webdriver.Chrome(service=service)
-    def __init__(self,countryCode,productName,currency):
+    def __init__(self,countryCode,productName,currency,driver):
         self.__productName=productName
         self.__currency=currency
         self.__countryCode=countryCode
+        self.driver=driver
 
     def Scrape(self):
         self.driver.get(os.getenv("AMAZON_URL"))
@@ -29,14 +28,28 @@ class AmazonScraper(Scraper):
         self._changeCountryToDesiredCountry()
         self._changeCurrencyToDesiredCurrency()
         self._findProduct()
-        return self._getRelevantProducts()
+        pro= self._getRelevantProducts()
+        # self.driver.close()
+        return pro
 
     
     def _acceptCookies(self):
-        acceptCookies= WebDriverWait(self.driver,15).until(
-            expected_conditions.presence_of_element_located((By.ID,"sp-cc-accept"))
-        )
-        acceptCookies.click()
+        success=False
+        counter=0
+        while(success==False):
+            try:
+                if(counter >0):
+                    self.driver.get(os.getenv("AMAZON_URL"))
+                acceptCookies= WebDriverWait(self.driver,15).until(
+                    expected_conditions.presence_of_element_located((By.ID,"sp-cc-accept"))
+                )
+                acceptCookies.click()
+                success=True
+            except Exception as e:
+                counter += 1
+                print(f"Amazon accept cookie retry {counter}")
+                if(counter>=4):
+                    success=True
     
     def _changeCountryToDesiredCountry(self):
         time.sleep(2)
@@ -69,7 +82,7 @@ class AmazonScraper(Scraper):
         )
         changeCurrencyDropDownButton.click()
 
-        selectCountry= WebDriverWait(self.driver,15).until(
+        selectCountry= WebDriverWait(self.driver,25).until(
             expected_conditions.element_to_be_clickable((By.ID,self.__currency))
         )
 

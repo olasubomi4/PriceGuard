@@ -1,5 +1,7 @@
 import time
 
+from selenium.common import NoSuchElementException
+
 from dto.Product import Product
 
 from selenium.webdriver.common.by import By
@@ -14,16 +16,18 @@ import os
 from scraper.Scraper import Scraper
 class EbayScraper(Scraper):
     load_dotenv()
-    service = Service(executable_path=os.getenv("EXE_PATH"))
-    driver = webdriver.Chrome(service=service)
+    # service = Service(executable_path=os.getenv("EXE_PATH"))
+    # driver = webdriver.Chrome(service=service)
 
-    def __init__(self, countryCode, productName, currency):
+    def __init__(self, countryCode, productName, currency,driver):
         self.__productName = productName
         self.__currency = currency
         self.__countryCode = countryCode
+        self.driver = driver
 
 
     def Scrape(self):
+        time.sleep(6)
         self.driver.get(os.getenv("EBAY_URL"))
         time.sleep(6)
         self._acceptCookies()
@@ -100,16 +104,19 @@ class EbayScraper(Scraper):
 
     def _getDetailedInformationAboutProduct(self, product):
         if product != None and product.getProductLink() != None:
-            driver = self.driver
-            driver.get(product.getProductLink())
-            # self._getProuctRating(product, driver)
-            self._isProductInStock(product, driver)
-            self._getProductLocation(product, driver)
-            self._getProductFeatures(product, driver)
-            self._getDeliveryDetails(product, driver)
-            self._getProductDetails(product, driver)
-            self._getEventName(product, driver)
-            self._getProductCateogry(product, driver)
+            try:
+                driver = self.driver
+                driver.get(product.getProductLink())
+                self._getProuctRating(product, driver)
+                self._isProductInStock(product, driver)
+                self._getProductLocation(product, driver)
+                self._getProductFeatures(product, driver)
+                self._getDeliveryDetails(product, driver)
+                self._getProductDetails(product, driver)
+                self._getEventName(product, driver)
+                self._getProductCateogry(product, driver)
+            except :
+                pass
 
 
             time.sleep(2)
@@ -120,6 +127,7 @@ class EbayScraper(Scraper):
             # self._getProductCateogry(product, driver)
             # self._getProductLocation(product, driver)
 
+    # // *[ @ id = "STORE_INFORMATION"] / div / div / div[1] / div[1] / div[2] / div / h4 / span[1]
 
 
     def _isProductInStock(self,product, driver):
@@ -134,12 +142,24 @@ class EbayScraper(Scraper):
 
     def _getProductLocation(self,product, driver):
         try:
-            productLocation = driver.find_element(By.XPATH,'//*[@id="mainContent"]/div[1]/div[8]/div/div/div/div[2]/div/div/div[2]/div/div[2]/span')
-            productLocationValue = productLocation.text.split(":")[1]
+            # // *[ @ id = "mainContent"] / div / div[7] / div / div / div / div[1] / div / div / div[2] / div / div[
+            #     2] / span
+            # // *[ @ id = "mainContent"] / div[1] / div[8] / div / div / div / div[1] / div / div / div[2] / div / div[
+            #     2] / span
+            productLocation = driver.find_element(By.XPATH,'//div[contains(@class, "ux-labels-values--shipping")]')
+            productLocationValue = productLocation.text
             product.setProductLocation(productLocationValue)
 
         except Exception as e:
+            # try :
+            #     productLocation = driver.find_element(By.XPATH,
+            #                                           '//*[@id="mainContent"]/div/div[6]/div/div/div/div[1]/div/div/div[2]/div/div[2]/span')
+            #     productLocationValue = productLocation.text.split(":")[1]
+            #     product.setProductLocation(productLocationValue)
+            # except Exception as e:
             product.setProductLocation("Product location not available")
+
+
 
     def _getProductFeatures(self, product, driver):
         try:
@@ -171,7 +191,7 @@ class EbayScraper(Scraper):
 
     def _getDeliveryDetails(self,product, driver):
         try:
-            deliveryDetails= driver.find_element(By.XPATH,'//*[@id="mainContent"]/div/div[8]/div/div/div/div[3]/div/div/div/div[2]').text
+            deliveryDetails= driver.find_element(By.XPATH,'//div[contains(@class, "deliverto")]').text
             product.setDeliveryDetails(deliveryDetails)
 
         except Exception as e:
@@ -216,8 +236,7 @@ class EbayScraper(Scraper):
 
     def _getProuctRating(self, product, driver):
         try:
-            averageCustomerRating = driver.find_element(By.ID, "averageCustomerReviews")
-            averageCustomerRating = averageCustomerRating.find_element(By.XPATH, '//*[@id="acrPopover"]/span[1]/a/span')
+            averageCustomerRating = driver.find_element(By.XPATH, '//*[@id="STORE_INFORMATION"]/div/div/div[1]/div[1]/div[2]/div/h4/span[1]')
             product.setProductRating(averageCustomerRating.text)
         except Exception as e:
             product.setProductRating("Rating not available")

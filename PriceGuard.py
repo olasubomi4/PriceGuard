@@ -1,12 +1,19 @@
 from db.PostgreSql import PostgreSql
+from factory.EbayTransformerFactory import EbayTransformerFactory
 from scraper.AmazonScraper import AmazonScraper
 import pandas as pd
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from dotenv import load_dotenv
+import re;
+import os
 
 from scraper.CurrysScraper import CurrysScraper
 from scraper.EbayScraper import EbayScraper
 
 
 class PriceGuard:
+    load_dotenv()
     def __init__(self, countryCode, productName, currency):
         self.__productName = productName
         self.__currency = currency
@@ -21,10 +28,11 @@ class PriceGuard:
 
     def performDataAcquisition(self):
         scrapersResult = []
-        amazonScraper = AmazonScraper( self.__countryCode,self.__productName, self.__currency)
-        currysScraper= CurrysScraper( self.__countryCode,self.__productName, self.__currency)
-        ebayScraper= EbayScraper( self.__countryCode, self.__productName, self.__currency)
-        scrapers = [ebayScraper,amazonScraper]
+        service = Service(executable_path=os.getenv("EXE_PATH"))
+        driver = webdriver.Chrome(service=service)
+        amazonScraper = AmazonScraper( self.__countryCode,self.__productName, self.__currency,driver)
+        ebayScraper= EbayScraper( self.__countryCode, self.__productName, self.__currency,driver)
+        scrapers = [amazonScraper,ebayScraper]
         ps=pd.DataFrame()
         for scraper in scrapers:
             res=scraper.Scrape()
@@ -32,25 +40,20 @@ class PriceGuard:
 
             for a in scraper_json:
                 ps = pd.concat([ps, pd.DataFrame([a.to_dict()])], ignore_index=True)
-
                 scrapersResult.append(res)
 
-        ps.to_csv('a.csv',index=False)
+        ps.to_csv('rawData.csv',index=True)
         return ps
 
 
-    def performDataTransformation(self,scrapedData):
-        productCurrency = scrapedData['productCurrency'][0]
-        s=scrapedData["priceBeforeDiscount"].str.split(productCurrency,expand=True)
-        if(s[0] is None):
-            scrapedData["priceBeforeDiscount"]=s[1]
-        else:
-            scrapedData["priceBeforeDiscount"]="n/a"
+    def performDataTransformation(self,scrapedData:  pd.DataFrame):
+        ebayData = scrapedData[scrapedData["productStore"] == "Ebay"]
+        scrapedData = scrapedData[scrapedData["productStore"] != "Ebay"]
+        ebayTransformer=EbayTransformerFactory().createTransformer(self.__productName)
+        scrapedData=pd.concat([scrapedData,ebayTransformer.transformData(ebayData)],ignore_index=True)
 
-
-        print(s);
-
-        pass
+        scrapedData.to_csv('transformedData.csv',index=True)
+        print("ad")
 
     def performDataLoading(self,scrapersResult):
         postgreSql = PostgreSql()
