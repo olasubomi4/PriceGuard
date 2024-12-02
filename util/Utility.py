@@ -8,32 +8,10 @@ class Utility:
 
     def convertDictionaryInStringFormatToDictionary(self, stringDictionary):
         try:
-            # stringDictionary = stringDictionary.replace('"', " ")
-            # stringDictionary = stringDictionary.replace("'", "\"")
-
-            # stringDictionary=stringDictionary.replace("\n", " ")
             return ast.literal_eval(stringDictionary)
-
         except Exception as e:
             print(e)
             return {}
-
-        # newDictionary = {}
-        # stringDictionary=stringDictionary.replace("{", "")
-        # stringDictionary=stringDictionary.replace("}", "")
-        #
-        # key_value_pairs = stringDictionary.split(", ")
-        #
-        # for pair in key_value_pairs:
-        #     # Split each pair into key and value
-        #     key, value = pair.split(":")
-        #     # Remove any extra whitespace around key and value
-        #     key, value = key.strip(), value.strip()
-        #     # Add to the new dictionary
-        #     newDictionary[key] = value
-        #     newDictionary[value] = key  # Reverse mapping
-        #
-        # return newDictionary
 
 # if __name__ == "__main__":
 #     utility = Utility()

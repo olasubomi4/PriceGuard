@@ -1,6 +1,9 @@
 import psycopg2
 import os
 from dotenv import load_dotenv
+import pandas as pd
+from sqlalchemy import create_engine
+
 
 class PostgreSql:
     load_dotenv()
@@ -11,6 +14,11 @@ class PostgreSql:
         self.__dbUser=os.environ['DB_USER']
         self.__dbHost=os.environ['DB_HOST']
         self.__dbPort=os.environ['DB_PORT']
+
+    def __getConnectionEngine(self):
+        connection_string = f"postgresql://{self.__dbUser}:{self.__dbPassword}@{self.__dbHost}:{self.__dbPort}/{self.__dbName}"
+        engine = create_engine(connection_string)
+        return engine
 
     def __connect(self):
         return psycopg2.connect(database=self.__dbName,host=self.__dbHost,port=self.__dbPort,password=self.__dbPassword,user=self.__dbUser)
@@ -26,10 +34,13 @@ class PostgreSql:
                 res = cur.fetchone()
                 return res
 
-    def insertProducts(self, data):
-        with self.__getConn() as conn:
-            df.to_sql('your_table_name', con=conn, index=False,
-                      if_exists='replace')  # You can choose 'append' instead of 'replace'
+    def insertProducts(self, data:pd.DataFrame,productName:str):
+        # with self.__getConn() as conn:
+        try:
+            data.to_sql(productName, con=self.__getConnectionEngine(), index=False,
+                      if_exists='append')
+        except Exception as e:
+            print(e)
 
 
 

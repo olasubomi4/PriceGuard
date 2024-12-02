@@ -68,7 +68,7 @@ class AmazonTransformer (Transformer):
     #     return  data['productLocation'].apply(lambda x: re.search(located_in_pattern, x).group(1) if isinstance(x, str) else None)
 
     def __getEarliestDeliveryDate(self,data: pd.DataFrame):
-        date_pattern = r"\b(?:Monday|Tuesday|Wedenesdy|Thursday|Friday|Saturday|Sunday),\s\d{1,2}\s(?:January|Febuary|March|April|May|June|July|August|September|October|November|December)\b"
+        date_pattern = r"\b(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),\s\d{1,2}\s(?:January|Febuary|March|April|May|June|July|August|September|October|November|December)\b"
 
         return data['deliveryDetails'].apply(lambda x: re.search(date_pattern, x).group(0) if re.search(date_pattern, x) else None)
 

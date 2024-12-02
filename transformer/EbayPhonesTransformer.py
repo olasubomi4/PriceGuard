@@ -1,7 +1,6 @@
 import pandas as pd
 import re
 from transformer.Transformer import Transformer
-from util.Utility import Utility
 
 
 class EbayPhonesTransformer(Transformer):
@@ -46,9 +45,16 @@ class EbayPhonesTransformer(Transformer):
         return data['productFeatures'].apply(
             lambda x: x.get('Model'))
         # return data['productFeatures'].get('Model')
+    def extractDeliveryFees(self,value):
+        postage_pattern = r"Postage:\s*(.+)"
+        if isinstance(value, str):
+            match = re.search(postage_pattern, value)
+            if match:
+                return match.group(0)
+        return None
     def __getProductDeliveryFee(self,data: pd.DataFrame):
         postage_pattern = r"Postage:\s*(.+)"
-        return  self.__getDeliveryFeeInEuros(data['productLocation'].apply(lambda x: self.extract_delivery_fee(x,postage_pattern)))
+        return  self.__getDeliveryFeeInEuros(data['productLocation'].apply(self.extractDeliveryFees))
 
     def extract_delivery_fee(self,product_location, pattern):
         if product_location is None:
@@ -70,14 +76,25 @@ class EbayPhonesTransformer(Transformer):
             return match.group(1) if match.group(1) else 0
         return None
 
-    def __getProductLocation(self,data: pd.DataFrame):
+    def extractLocation(self,value):
         located_in_pattern = r"Located in:\s*(.+)"
-        return  data['productLocation'].apply(lambda x: re.search(located_in_pattern, x).group(1) if isinstance(x, str) else None)
+        if isinstance(value, str):
+            match = re.search(located_in_pattern, value)
+            if match:
+                return match.group(1)
+        return None
+    def __getProductLocation(self,data: pd.DataFrame):
+        return  data['productLocation'].apply(self.extractLocation)
 
-    def __getEarliestDeliveryDate(self,data: pd.DataFrame):
+    def extractEarliestDeliveryDate(self, value):
         date_pattern = r"\b(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun),\s\d{1,2}\s(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b"
-
-        return data['deliveryDetails'].apply(lambda x: re.search(date_pattern, x).group(0) if re.search(date_pattern, x) else None)
+        if isinstance(value, str):
+            match = re.search(date_pattern, value)
+            if match:
+                return match.group(0)
+        return None
+    def __getEarliestDeliveryDate(self,data: pd.DataFrame):
+        return data['deliveryDetails'].apply(self.extractEarliestDeliveryDate)
 
     def __getProductsWithFreeDelivery(self,data: pd.DataFrame):
         return data['deliveryFee'] == 0
@@ -90,9 +107,15 @@ class EbayPhonesTransformer(Transformer):
         ratingInPercentage=ratingInPercentage.str.replace("%","").astype(float)
         return ratingInPercentage/20
 
-    def __extractRatingInPercentage(self,data: pd.DataFrame):
+    def extractRatingInPercent(self, value):
         percentagePattern= r"\d{1,2}.\d?%"
-        return data['productRating'].apply(lambda x: re.search(percentagePattern, x).group(0) if re.search(percentagePattern, x) else None)
+        if isinstance(value, str):
+            match = re.search(percentagePattern, value)
+            if match:
+                return match.group(0)
+        return None
+    def __extractRatingInPercentage(self,data: pd.DataFrame):
+        return data['productRating'].apply(self.extractRatingInPercent)
 
 
 

@@ -61,25 +61,25 @@ class PriceGuard:
         # scrapedData=pd.concat([scrapedData,ebayTransformer.transformData(ebayData)],ignore_index=True)
         scrapedData=pd.concat(all_data,ignore_index=True)
 
-
-
-        scrapedData.to_csv('transformedData.csv',index=True)
-
         scrapedData=self.removeRowsWhereBrandIsNotApple(scrapedData)
         scrapedData=self.removeRowsWhereColorIsBlank(scrapedData)
-
-
-        print("ad")
+        scrapedData.drop(columns=['productFeatures'],inplace=True)
+        scrapedData.to_csv('transformedData.csv',index=True)
+        return scrapedData
 
     def performDataLoading(self,scrapersResult):
-        postgreSql = PostgreSql()
-        postgreSql.insertProducts(scrapersResult);
+        try:
+            postgreSql = PostgreSql()
+            postgreSql.insertProducts(scrapersResult,self.__productName);
+            print("SAVE to db successfull")
+        except Exception as e:
+            print(f"Exception thrown while trying to save result into db {e}")
 
         pass
 
 
     def removeRowsWhereBrandIsNotApple(self,scrapedData: pd.DataFrame):
-        brandsWhichAreNotApple= scrapedData[scrapedData["brand"] != "Amazon"]
+        brandsWhichAreNotApple= scrapedData[scrapedData["brand"] != "Apple"]
         return scrapedData
 
     def removeRowsWhereColorIsBlank(self, scrapedData: pd.DataFrame):
