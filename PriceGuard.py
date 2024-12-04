@@ -63,6 +63,7 @@ class PriceGuard:
 
         scrapedData=self.removeRowsWhereBrandIsNotApple(scrapedData)
         scrapedData=self.removeRowsWhereColorIsBlank(scrapedData)
+        scrapedData=self.removeRowsWithoutAPrice(scrapedData)
         scrapedData.drop(columns=['productFeatures'],inplace=True)
         scrapedData.to_csv('transformedData.csv',index=True)
         return scrapedData
@@ -84,3 +85,6 @@ class PriceGuard:
 
     def removeRowsWhereColorIsBlank(self, scrapedData: pd.DataFrame):
         return scrapedData.dropna(subset=["Colour"])
+
+    def removeRowsWithoutAPrice(self, scrapedData: pd.DataFrame):
+        return scrapedData.dropna(subset=["productPrice"])

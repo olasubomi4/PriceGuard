@@ -11,6 +11,8 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from dotenv import load_dotenv
 import re;
+from math import ceil
+import multiprocessing
 import os
 
 from scraper.Scraper import Scraper
@@ -111,10 +113,51 @@ class EbayScraper(Scraper):
             self._goToNextPage(self.driver)
             counter+=1
             time.sleep(5)
+            self.__getDetailedInformationAboutProductWhileUtilisingParallelism(productList)
+        # for product in productList.values():
+        #     self._getDetailedInformationAboutProduct(product)
+
+        return productList
+
+
+
+    def __getDetailedInformationAboutProductWhileUtilisingParallelism(self, productList:dict):
+
+        chunksList=self.__splitProductListIntoChunks(productList);
+        processList=[]
+        processResultList=[]
+        # processResultDic={}
+        for chunks in chunksList:
+            process = multiprocessing.Process(target=self.__executeGetProductDetailsWithAProcess, args=(chunks))
+            processList.append(process)
+
+        for process in processList:
+            process.start()
+
+        for process in processList:
+            processResultList.append(process.join())
+
+        # for processResult in processResultList:
+        #     processResultDic.update(processResult)
+        # return processResultDic
+
+    def __executeGetProductDetailsWithAProcess(self, productList:dict):
         for product in productList.values():
             self._getDetailedInformationAboutProduct(product)
 
-        return productList
+    def __splitProductListIntoChunks(self, productList:dict):
+        numberOfCores = int(os.getenv("NUMBER_OF_CORES",1))
+        chunkSize=ceil(len(productList)/numberOfCores)
+        chunkList=[]
+        chunkDictionary={}
+        for i,(key,value) in enumerate(productList.items()):
+            chunkDictionary[key]=value
+            if (i+1)%chunkSize ==0 or i+1 == len(productList):
+                chunkList.append(chunkDictionary)
+                chunkDictionary={}
+        return chunkList
+
+
 
     def _getDetailedInformationAboutProduct(self, product):
         if product != None and product.getProductLink() != None:
@@ -141,8 +184,10 @@ class EbayScraper(Scraper):
 
     def _isProductInStock(self,product, driver):
         try:
-            productAvailability = driver.find_element(By.ID, "qtyAvailability")
-            productAvailabilityValue = int(productAvailability.text.split(" ")[0])
+            productAvailability = driver.find_element(By.XPATH, '//*[@id="qtyTextBox"]')
+            # productAvailabilityValue = int(productAvailability.text.split(" ")[0])
+            productAvailabilityValue = int(productAvailability.get_attribute("value"))
+
 
             if (productAvailabilityValue>0):
                 product.setIsInStock(True)
