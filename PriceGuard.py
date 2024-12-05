@@ -64,6 +64,13 @@ class PriceGuard:
         scrapedData=self.removeRowsWhereBrandIsNotApple(scrapedData)
         scrapedData=self.removeRowsWhereColorIsBlank(scrapedData)
         scrapedData=self.removeRowsWithoutAPrice(scrapedData)
+        scrapedData=self.addBrandNameToModelIfMissing(scrapedData)
+        scrapedData=self.handleMissingScreenSize(scrapedData)
+        scrapedData=self.convertProductPriceToFloat(scrapedData)
+        scrapedData=self.convertPriceBeforeDiscountToFloat(scrapedData)
+        scrapedData=self.standardiseTheScreenSize(scrapedData)
+        scrapedData=self.convertDeliveryFeeToFloat(scrapedData)
+
         scrapedData.drop(columns=['productFeatures'],inplace=True)
         scrapedData.to_csv('transformedData.csv',index=True)
         return scrapedData
@@ -88,3 +95,32 @@ class PriceGuard:
 
     def removeRowsWithoutAPrice(self, scrapedData: pd.DataFrame):
         return scrapedData.dropna(subset=["productPrice"])
+
+    def handleMissingScreenSize(self,ScraperResult: pd.DataFrame):
+        modePerModel = ScraperResult.groupby('Model')['screenSize'].apply(
+            lambda x: x.mode().iloc[0] if not x.mode().empty else None)
+        ScraperResult['screenSize'] = ScraperResult.apply(
+            lambda row: modePerModel.get(row['Model'], None) if pd.isnull(row['screenSize']) else row['screenSize'],
+            axis=1
+        )
+        return ScraperResult
+
+    def addBrandNameToModelIfMissing(self,ScraperResult: pd.DataFrame):
+         ScraperResult["Model"]= ScraperResult.apply(lambda row: str(row["brand"])+" "+str(row["Model"]) if str(row["Model"]).split(" ")[0] !=row["brand"] else str(row["Model"]), axis=1)
+         return ScraperResult
+
+    def convertProductPriceToFloat(self,ScraperResult: pd.DataFrame):
+        ScraperResult['productPrice'] = ScraperResult['productPrice'].str.replace(",", "").astype(float)
+        return ScraperResult
+
+    def convertPriceBeforeDiscountToFloat(self,ScraperResult: pd.DataFrame):
+        ScraperResult['priceBeforeDiscount'] = ScraperResult['priceBeforeDiscount'].str.replace(",", "").astype(float)
+        return ScraperResult
+    def convertDeliveryFeeToFloat(self,ScraperResult: pd.DataFrame):
+        ScraperResult['deliveryFee'] = ScraperResult['deliveryFee'].str.replace(",", "").astype(float)
+        return ScraperResult
+
+    def standardiseTheScreenSize(self,ScraperResult: pd.DataFrame):
+        ScraperResult['screenSize'] = ScraperResult["screenSize"].apply(lambda screenSize: screenSize.replace('"', " Inches") if(isinstance(screenSize,str)) else  None)
+        ScraperResult['screenSize'] = ScraperResult["screenSize"].apply(lambda screenSize: screenSize.replace(' in', " Inches")if( isinstance(screenSize,str)) else  None)
+        return ScraperResult

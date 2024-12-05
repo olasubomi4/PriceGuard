@@ -1,4 +1,6 @@
+import pickle
 import time
+from concurrent.futures import ProcessPoolExecutor, as_completed, ThreadPoolExecutor
 
 from selenium.common import NoSuchElementException
 
@@ -16,6 +18,9 @@ import multiprocessing
 import os
 
 from scraper.Scraper import Scraper
+# from util.EbayScraperHelper import EbayScraperHelper
+
+
 class EbayScraper(Scraper):
     load_dotenv()
     # service = Service(executable_path=os.getenv("EXE_PATH"))
@@ -45,7 +50,7 @@ class EbayScraper(Scraper):
         counter=0
         while(success==False):
             try:
-                if(counter >0):
+                if(counter>0):
                     self.driver.get(os.getenv("EBAY_URL"))
                 acceptCookies = WebDriverWait(self.driver, 15).until(
                     expected_conditions.presence_of_element_located((By.ID, "gdpr-banner-accept"))
@@ -113,40 +118,63 @@ class EbayScraper(Scraper):
             self._goToNextPage(self.driver)
             counter+=1
             time.sleep(5)
-            self.__getDetailedInformationAboutProductWhileUtilisingParallelism(productList)
+            # EbayScraperHelper.getDetailedInformationAboutProductWhileUtilisingParallelism(self, productList)
+        self.__getDetailedInformationAboutProductWhileUtilisingParallelism(productList)
         # for product in productList.values():
         #     self._getDetailedInformationAboutProduct(product)
 
         return productList
 
 
-
     def __getDetailedInformationAboutProductWhileUtilisingParallelism(self, productList:dict):
-
         chunksList=self.__splitProductListIntoChunks(productList);
         processList=[]
+        # self.driver.quit()
         processResultList=[]
+        processResultDic={}
+        # multiprocessing.set_start_method('fork')
+        numberOfThreads = int(os.getenv("NUMBER_OF_THREADS",1))
+        with ThreadPoolExecutor(max_workers=numberOfThreads) as executor:
+            for chunks in chunksList:
+                # serializedChunks = pickle.dumps(chunks)
+                processList.append(
+                    executor.submit(self.__executeGetProductDetailsWithAProcess, chunks))
+
+            for future in as_completed(processList):
+                processResultList.append(future.result())
+            #
+            # for processResult in processResultList:
+            #     processResultDic.update(processResult)
+            # return processResultDic
+
+
+
         # processResultDic={}
-        for chunks in chunksList:
-            process = multiprocessing.Process(target=self.__executeGetProductDetailsWithAProcess, args=(chunks))
-            processList.append(process)
-
-        for process in processList:
-            process.start()
-
-        for process in processList:
-            processResultList.append(process.join())
+        # for chunks in chunksList:
+        #     driver=self.__createANewSeleniumDriver()
+        #     process = multiprocessing.Process(target=EbayScraper.__executeGetProductDetailsWithAProcess, args=(self,chunks,driver))
+        #     processList.append(process)
+        #
+        # for process in processList:
+        #     process.start()
+        #
+        # for process in processList:
+        #     processResultList.append(process.join())
 
         # for processResult in processResultList:
         #     processResultDic.update(processResult)
         # return processResultDic
 
-    def __executeGetProductDetailsWithAProcess(self, productList:dict):
+    def __executeGetProductDetailsWithAProcess(self, productList):
+        driver= self.__createANewSeleniumDriver()
+        # productList = pickle.loads(seralizedProductList)
         for product in productList.values():
-            self._getDetailedInformationAboutProduct(product)
+            self._getDetailedInformationAboutProduct(product,driver)
+        # return productList
+
 
     def __splitProductListIntoChunks(self, productList:dict):
-        numberOfCores = int(os.getenv("NUMBER_OF_CORES",1))
+        numberOfCores = int(os.getenv("NUMBER_OF_THREADS",1))
         chunkSize=ceil(len(productList)/numberOfCores)
         chunkList=[]
         chunkDictionary={}
@@ -159,10 +187,11 @@ class EbayScraper(Scraper):
 
 
 
-    def _getDetailedInformationAboutProduct(self, product):
+    def _getDetailedInformationAboutProduct(self, product,driver):
+
         if product != None and product.getProductLink() != None:
             try:
-                driver = self.driver
+                # driver = self.driver
                 driver.get(product.getProductLink())
                 self._getProuctRating(product, driver)
                 self._isProductInStock(product, driver)
@@ -192,7 +221,7 @@ class EbayScraper(Scraper):
             if (productAvailabilityValue>0):
                 product.setIsInStock(True)
         except Exception as e:
-                product.setIsInStock("Stock status not available")
+                product.setIsInStock(True)
 
     def _getProductLocation(self,product, driver):
         try:
@@ -241,7 +270,7 @@ class EbayScraper(Scraper):
 
             product.setProductFeatures(data)
         except:
-            product.setProductFeatures("Features not available")
+            product.setProductFeatures({})
 
     def _getDeliveryDetails(self,product, driver):
         try:
@@ -267,7 +296,7 @@ class EbayScraper(Scraper):
             product. setProductDescription("Product details not available")
 
     def _getEventName(self,product, driver):
-        product.setEvent("Event name not available")
+        product.setEvent("Event not available")
 
     def _getProductCateogry(self, product, driver):
         try:
@@ -303,3 +332,8 @@ class EbayScraper(Scraper):
             product.setProductRating(averageCustomerRating.text)
         except Exception as e:
             product.setProductRating("Rating not available")
+
+    def __createANewSeleniumDriver(self):
+        service = Service(executable_path=os.getenv("EXE_PATH"))
+        driver = webdriver.Chrome(service=service)
+        return driver

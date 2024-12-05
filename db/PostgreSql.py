@@ -38,7 +38,7 @@ class PostgreSql:
         # with self.__getConn() as conn:
         try:
             data.to_sql(productName, con=self.__getConnectionEngine(), index=False,
-                      if_exists='append')
+                      if_exists="replace")
         except Exception as e:
             print(e)
 

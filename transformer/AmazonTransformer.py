@@ -16,6 +16,7 @@ class AmazonTransformer (Transformer):
         data.loc[:,"storageCapacity"]= self.__generateProductStorageCapacityFromProductFeatures(data)
         data.loc[:,"Colour"]=self.__generateProductColorFromProductFeatures(data)
         data.loc[:,"Model"]=self.__generateProductModelFromProductFeatures(data)
+        data.loc[:,"priceBeforeDiscount"]=self.__removeCurrencyFromDiscountPrice(data)
         return data
     def __generateBrandFromProductFeatures(self, data: pd.DataFrame):
         return data['productFeatures'].apply(lambda x: x.get('Brand'))
@@ -67,10 +68,16 @@ class AmazonTransformer (Transformer):
     #     located_in_pattern = r"Located in:\s*(.+)"
     #     return  data['productLocation'].apply(lambda x: re.search(located_in_pattern, x).group(1) if isinstance(x, str) else None)
 
-    def __getEarliestDeliveryDate(self,data: pd.DataFrame):
+    def extractEarliestDeliveryDate(self, value):
         date_pattern = r"\b(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),\s\d{1,2}\s(?:January|Febuary|March|April|May|June|July|August|September|October|November|December)\b"
+        if isinstance(value, str):
+            match = re.search(date_pattern, value)
+            if match:
+                return Utility.predictYearFromDate(match.group(0), "%A, %d %B")
+        return None
+    def __getEarliestDeliveryDate(self,data: pd.DataFrame):
 
-        return data['deliveryDetails'].apply(lambda x: re.search(date_pattern, x).group(0) if re.search(date_pattern, x) else None)
+        return data['deliveryDetails'].apply(self.extractEarliestDeliveryDate)
 
     def __getProductsWithFreeDelivery(self,data: pd.DataFrame):
         return data['deliveryFee'] == 0
@@ -87,6 +94,20 @@ class AmazonTransformer (Transformer):
         percentagePattern= r"\d{1,2}.\d?%"
         return data['productRating'].apply(lambda x: re.search(percentagePattern, x).group(0) if re.search(percentagePattern, x) else None)
 
+    def __removeCurrencyFromDiscountPrice(self,data: pd.DataFrame):
+        return data['priceBeforeDiscount'].apply(lambda x: x.replace("EUR", "") if(isinstance(x,str) and x.startswith("EUR")) else x)
+
+
+
+    # def __as(self,x,currency):
+    #     if(isinstance(x,str)):
+    #         if "Price not available"==x:
+    #             return 0
+    #         x=x.strip(currency)
+    #
+    #     else:
+    #         return 0
+
 
 
     def test(self):
@@ -95,8 +116,9 @@ class AmazonTransformer (Transformer):
         self.transformData(df)
 
 
-if __name__ == "__main__":
-        a= AmazonTransformer()
-        a.test()
+# if __name__ == "__main__":
+#         a= AmazonTransformer().removeCurrencyFromDiscountPrice("EUR965.20")
+#         pd.
+#         print(a)
 
 

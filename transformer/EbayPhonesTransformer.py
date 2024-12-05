@@ -1,6 +1,7 @@
 import pandas as pd
 import re
 from transformer.Transformer import Transformer
+from util.Utility import Utility
 
 
 class EbayPhonesTransformer(Transformer):
@@ -46,14 +47,13 @@ class EbayPhonesTransformer(Transformer):
             lambda x: x.get('Model'))
         # return data['productFeatures'].get('Model')
     def extractDeliveryFees(self,value):
-        postage_pattern = r"Postage:\s*(.+)"
+        postage_pattern = r"Postage|Shipping:\s*(.+)"
         if isinstance(value, str):
             match = re.search(postage_pattern, value)
             if match:
                 return match.group(0)
         return None
     def __getProductDeliveryFee(self,data: pd.DataFrame):
-        postage_pattern = r"Postage:\s*(.+)"
         return  self.__getDeliveryFeeInEuros(data['productLocation'].apply(self.extractDeliveryFees))
 
     def extract_delivery_fee(self,product_location, pattern):
@@ -87,11 +87,11 @@ class EbayPhonesTransformer(Transformer):
         return  data['productLocation'].apply(self.extractLocation)
 
     def extractEarliestDeliveryDate(self, value):
-        date_pattern = r"\b(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun),\s\d{1,2}\s(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b"
+        date_pattern = r"\b(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun),\s(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s\d{1,2}\b"
         if isinstance(value, str):
             match = re.search(date_pattern, value)
             if match:
-                return match.group(0)
+                return Utility.predictYearFromDate(match.group(0),"%a, %b %d")
         return None
     def __getEarliestDeliveryDate(self,data: pd.DataFrame):
         return data['deliveryDetails'].apply(self.extractEarliestDeliveryDate)

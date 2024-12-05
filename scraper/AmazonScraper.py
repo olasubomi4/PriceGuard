@@ -180,7 +180,7 @@ class AmazonScraper(Scraper):
 
             product.setPriceBeforeDiscount(priceBeforeDiscount.text)
         except Exception as e:
-            product.setPriceBeforeDiscount("Price not available")
+            product.setPriceBeforeDiscount(0)
 
     def _isProductInStock(self,product, driver):
         try:
@@ -256,7 +256,7 @@ class AmazonScraper(Scraper):
             discountPercentage = driver.find_element(By.CLASS_NAME, 'savingPriceOverride')
             product.setDiscountPercentage(discountPercentage.text)
         except:
-            product.setDiscountPercentage("Discount percentage not available")
+            product.setDiscountPercentage(None)
 
     def _getProductCateogry(self,product, driver):
         try:
