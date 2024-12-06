@@ -24,9 +24,7 @@ class PostgreSql:
         return psycopg2.connect(database=self.__dbName,host=self.__dbHost,port=self.__dbPort,password=self.__dbPassword,user=self.__dbUser)
 
     def __getConn(self):
-        if self.__conn==None:
-            return self.__connect()
-        return self.__conn
+        return self.__connect()
     def execute(self):
         with self.__getConn() as conn:
             with conn.cursor() as cur:
@@ -42,6 +40,24 @@ class PostgreSql:
         except Exception as e:
             print(e)
 
+    def retrieveTableAsDataFrame(self,tableName:str):
+        return pd.read_sql_table(tableName,con=self.__getConnectionEngine())
+
+
+    def dropTable(self, tableName:str):
+        self.execute(f"DROP TABLE {tableName};")
+
+    def execute(self,query:str):
+        with self.__getConn() as conn:
+            with conn.cursor() as cur:
+                cur.execute(query)
+                res = cur.fetchone()
+                return res
+
+
+if __name__ == '__main__':
+    result= PostgreSql().getTablehasDataFrame(tableName='Iphone 16')
+    print(result)
 
 
 

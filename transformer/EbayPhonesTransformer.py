@@ -87,14 +87,15 @@ class EbayPhonesTransformer(Transformer):
         return  data['productLocation'].apply(self.extractLocation)
 
     def extractEarliestDeliveryDate(self, value):
-        date_pattern = r"\b(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun),\s(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s\d{1,2}\b"
+        date_pattern = r"\b(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun),\s\d{1,2}\s(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b"
         if isinstance(value, str):
             match = re.search(date_pattern, value)
             if match:
-                return Utility.predictYearFromDate(match.group(0),"%a, %b %d")
+                return Utility.predictYearFromDate(match.group(0),"%a, %d %b")
         return None
     def __getEarliestDeliveryDate(self,data: pd.DataFrame):
-        return data['deliveryDetails'].apply(self.extractEarliestDeliveryDate)
+        a=data['deliveryDetails'].apply(lambda x : self.extractEarliestDeliveryDate(x))
+        return a
 
     def __getProductsWithFreeDelivery(self,data: pd.DataFrame):
         return data['deliveryFee'] == 0

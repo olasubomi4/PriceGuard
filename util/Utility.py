@@ -2,7 +2,7 @@ import ast
 import json
 import sys
 from datetime import datetime
-
+import pandas as pd
 
 class Utility:
     def __init__(self):
@@ -19,12 +19,31 @@ class Utility:
 
         return dataValueWithYear
 
-    def convertDictionaryInStringFormatToDictionary(self, stringDictionary):
+    @staticmethod
+    def convertDictionaryInStringFormatToDictionary(stringDictionary):
         try:
             return ast.literal_eval(stringDictionary)
         except Exception as e:
             print(e)
             return {}
+
+    @staticmethod
+    def convertStringToFloat(value):
+        try:
+            return float(value)
+        except Exception as e:
+            return 0.0
+
+    @staticmethod
+    def getDayDifferenceBetweenDates(startDate:pd,endDate:datetime):
+        try:
+            startDate= pd.to_datetime(startDate)
+            endDate=pd.to_datetime(endDate)
+            result=abs((endDate -startDate).days)
+            return result
+        except Exception as e:
+            print(e)
+            return None
 
 # if __name__ == "__main__":
     # utility = Utility()

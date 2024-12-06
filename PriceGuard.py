@@ -11,6 +11,7 @@ import os
 
 from scraper.CurrysScraper import CurrysScraper
 from scraper.EbayScraper import EbayScraper
+from util.Utility import Utility
 
 
 class PriceGuard:
@@ -70,6 +71,11 @@ class PriceGuard:
         scrapedData=self.convertPriceBeforeDiscountToFloat(scrapedData)
         scrapedData=self.standardiseTheScreenSize(scrapedData)
         scrapedData=self.convertDeliveryFeeToFloat(scrapedData)
+        scrapedData=self.removeProductImageColumn(scrapedData)
+        scrapedData=self.removeOperatingSystemColumn(scrapedData)
+        scrapedData=self.removePercentageSymbolFromDiscountPercentage(scrapedData)
+        scrapedData["numberOfDaysTillEarliestDeliveryDate"]=self.getNumberOfDaystillEarliestDeliveryDate(scrapedData)
+
 
         scrapedData.drop(columns=['productFeatures'],inplace=True)
         scrapedData.to_csv('transformedData.csv',index=True)
@@ -87,8 +93,7 @@ class PriceGuard:
 
 
     def removeRowsWhereBrandIsNotApple(self,scrapedData: pd.DataFrame):
-        brandsWhichAreNotApple= scrapedData[scrapedData["brand"] != "Apple"]
-        return scrapedData
+        return scrapedData[scrapedData["brand"] == "Apple"]
 
     def removeRowsWhereColorIsBlank(self, scrapedData: pd.DataFrame):
         return scrapedData.dropna(subset=["Colour"])
@@ -110,17 +115,50 @@ class PriceGuard:
          return ScraperResult
 
     def convertProductPriceToFloat(self,ScraperResult: pd.DataFrame):
-        ScraperResult['productPrice'] = ScraperResult['productPrice'].str.replace(",", "").astype(float)
+        # ScraperResult['productPrice'] = ScraperResult['productPrice'].apply(lambda pr: float(str(pr).replace(",", "")) if isinstance(pr,str)  else None)
+        ScraperResult['productPrice'] = ScraperResult['productPrice'].apply(
+            lambda pr: pr.replace(",", "") if (isinstance(pr, str)) else None)
+        ScraperResult['productPrice'] = ScraperResult['productPrice'].apply(lambda x: Utility.convertStringToFloat(x))
         return ScraperResult
 
     def convertPriceBeforeDiscountToFloat(self,ScraperResult: pd.DataFrame):
-        ScraperResult['priceBeforeDiscount'] = ScraperResult['priceBeforeDiscount'].str.replace(",", "").astype(float)
+        # ScraperResult['priceBeforeDiscount'] = ScraperResult['priceBeforeDiscount'].apply(lambda pr: float(str(pr).replace(",", "")) if(isinstance(pr,str) and pr!="Price not available") else None)
+
+        # ScraperResult['priceBeforeDiscount'] = ScraperResult['priceBeforeDiscount'].str.replace(",", "").astype(float)
+        ScraperResult['priceBeforeDiscount'] = ScraperResult['priceBeforeDiscount'].apply(
+            lambda pr: pr.replace(",", "") if (isinstance(pr, str)) else None)
+        ScraperResult['priceBeforeDiscount'] = ScraperResult['priceBeforeDiscount'].apply(lambda x: Utility.convertStringToFloat(x))
         return ScraperResult
     def convertDeliveryFeeToFloat(self,ScraperResult: pd.DataFrame):
-        ScraperResult['deliveryFee'] = ScraperResult['deliveryFee'].str.replace(",", "").astype(float)
+        # ScraperResult['deliveryFee'] = ScraperResult['deliveryFee'].astype(float)
+        ScraperResult['deliveryFee'] = ScraperResult['deliveryFee'].apply(lambda pr: pr.replace(",", "") if(isinstance(pr,str)) else None)
+        ScraperResult['deliveryFee'] = ScraperResult['deliveryFee'].apply(lambda x: Utility.convertStringToFloat(x))
         return ScraperResult
 
     def standardiseTheScreenSize(self,ScraperResult: pd.DataFrame):
         ScraperResult['screenSize'] = ScraperResult["screenSize"].apply(lambda screenSize: screenSize.replace('"', " Inches") if(isinstance(screenSize,str)) else  None)
         ScraperResult['screenSize'] = ScraperResult["screenSize"].apply(lambda screenSize: screenSize.replace(' in', " Inches")if( isinstance(screenSize,str)) else  None)
         return ScraperResult
+
+    def removeProductImageColumn(self,ScraperResult: pd.DataFrame):
+        ScraperResult.drop(columns=['productImage'],inplace=True,axis=1)
+        return ScraperResult
+
+    def removeOperatingSystemColumn(self, ScraperResult: pd.DataFrame):
+        ScraperResult.drop(columns=['operatingSystem'], inplace=True,axis=1)
+        return ScraperResult
+
+    def removePercentageSymbolFromDiscountPercentage(self, ScraperResult: pd.DataFrame):
+        ScraperResult["discountPercentage"]=ScraperResult["discountPercentage"].apply(lambda x: x.replace("%"," ") if( x!=None and isinstance(x,str)) else None)
+        ScraperResult["discountPercentage"]=ScraperResult["discountPercentage"].apply(lambda x: Utility.convertStringToFloat(x))
+        return ScraperResult
+
+    def getNumberOfDaystillEarliestDeliveryDate(self, ScraperResult: pd.DataFrame):
+        if 'earliestDeliveryDate' not in ScraperResult.columns or 'productScrapeDate' not in ScraperResult.columns:
+            raise ValueError("Required columns are missing from the DataFrame.")
+
+        return ScraperResult.apply( lambda row: Utility.getDayDifferenceBetweenDates(row["earliestDeliveryDate"],row["productScrapeDate"]),axis=1)
+
+    # def removeOutlierBrand(self,ScraperResult: pd.DataFrame ):
+    #     mostCommonBrand= ScraperResult["brand"].mode()
+    #     scrapedData[ScraperResult["brand"]!=mostCommonBrand]
