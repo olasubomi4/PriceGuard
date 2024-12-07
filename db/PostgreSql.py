@@ -8,8 +8,11 @@ from sqlalchemy import create_engine
 class PostgreSql:
     load_dotenv()
 
-    def __init__(self):
-        self.__dbName=os.environ['DB_NAME']
+    def __init__(self,mode="live"):
+        if mode != "test":
+            self.__dbName=os.environ['DB_NAME']
+        else:
+            self.__dbName = os.environ['UNIT_TEST_DB_NAME']
         self.__dbPassword=os.environ['DB_PASSWORD']
         self.__dbUser=os.environ['DB_USER']
         self.__dbHost=os.environ['DB_HOST']
@@ -35,24 +38,30 @@ class PostgreSql:
     def insertProducts(self, data:pd.DataFrame,productName:str):
         # with self.__getConn() as conn:
         try:
-            data.to_sql(productName, con=self.__getConnectionEngine(), index=False,
+            data.to_sql(productName, con=self.__getConnectionEngine(), index=True,
                       if_exists="replace")
+            return True
         except Exception as e:
             print(e)
+            return False
 
     def retrieveTableAsDataFrame(self,tableName:str):
-        return pd.read_sql_table(tableName,con=self.__getConnectionEngine())
+        return pd.read_sql_table(tableName,con=self.__getConnectionEngine(),index_col="id").sort_values(by="id")
 
 
-    def dropTable(self, tableName:str):
-        self.execute(f"DROP TABLE {tableName};")
+    def dropTable(self,tableName:str):
+        query=f'DROP TABLE "{tableName}";'
+        try:
+            with self.__getConn() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(query)
+                    conn.commit()
+                    return True
 
-    def execute(self,query:str):
-        with self.__getConn() as conn:
-            with conn.cursor() as cur:
-                cur.execute(query)
-                res = cur.fetchone()
-                return res
+        except Exception as e:
+            return False
+
+
 
 
 if __name__ == '__main__':

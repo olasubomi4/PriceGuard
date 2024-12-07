@@ -81,6 +81,7 @@ class AmazonScraper(Scraper):
 
         )
         changeCurrencyDropDownButton.click()
+        time.sleep(2)
 
         selectCountry= WebDriverWait(self.driver,25).until(
             expected_conditions.element_to_be_clickable((By.ID,self.__currency))
