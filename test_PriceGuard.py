@@ -22,5 +22,5 @@ class PriceGuardUnit(unittest.TestCase):
 
     def test_prepare_data_confirm_product_price_column_is_type_float(self):
         dataFrameFromPreparedData=self.priceGuard.prepareData()
-        self.assertTrue(dataFrameFromPreparedData["productPrice"].dtype=="float64")
+        assert dataFrameFromPreparedData["productPrice"].dtype=="float64"
         # pd.DataFrame(dataFrameFromPreparedData).dtypes
